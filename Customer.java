@@ -3,20 +3,23 @@ import java.io.*;
 public class Customer extends User
 {
     private String pNum;
-    private static String[] custCodes = new String[1000];
-    private static char[] membership = new char[1000];
-    private String[] memName = new String[1000];
-    private String[] memPhone = new String[1000];
+    private static String[] custCodes = new String[100];
+    private static char[] membership = new char[100];
+    private String[] memName = new String[100];
+    private String[] memPhone = new String[100];
     private static int memSIZE = 0;
-    private String[] custName = new String[1000];
-    private String[] custPhone = new String[1000];
-    public static int SIZE = 0;
+    private static String[] custName = new String[100];
+    private static String[] custPhone = new String[100];
+    public static int SIZE = 0; //Number of customer
+    public int index = 0; // Current customer, allow accessor to function
+    private static Customer[] allCustomers = new Customer[100];
 
     // Constructor
     public Customer(String name, String pNum)
     {
         super(generateCustID(), name); //auto-generates customer ID
         this.pNum = pNum;
+        saveCustDetails();
     }
     
     // Mutator
@@ -24,31 +27,54 @@ public class Customer extends User
 
     // Accessor
     public String getPhoneNumber(){return this.pNum;}
-    public char  getMembership(){return this.membership[SIZE]; }
-    public String getCustCodes(){return this.custCodes[SIZE];}
-    public String getCustName(){return this.custName[SIZE];}
-    public String getCustPhone(){return this.custPhone[SIZE];}
+    public char  getMembership(){return this.membership[index]; }
+    public String getCustCodes(){return this.custCodes[index];}
+    public String getCustName(){return this.custName[index];}
+    public String getCustPhone(){return this.custPhone[index];}
+    public static String[] getAllCustNames(){ return custName; }
+    public static String[] getAllCustPhone(){ return custPhone; }
 
+    
+    
     // ================= GENERATE CUSTOMER ID =================
     private static String generateCustID()//(Generates a random customer ID & checks for duplicates)
     {
         Random random = new Random();
-        int randNum = random.nextInt(100,1000);
-        String custID = "CUS-"+randNum;
+        String custID;
+        boolean duplicate;
         
-        boolean duplicate = false;
-        for(int y=0; y<SIZE; y++)
-        {
-            if(custCodes[y] != null && custCodes[y].equals(custID))
+        do{
+            int randNum = random.nextInt(100,1000);
+            custID = "CUS-"+randNum;
+            duplicate = false;
+            for(int y=0; y<SIZE; y++)
             {
-                duplicate = true;
-                break;
+                if(custCodes[y] != null && custCodes[y].equals(custID))
+                {
+                    duplicate = true;
+                    break;
+                }
             }
-        }
+        }while(duplicate);
         
         custCodes[SIZE] = custID;
         membership[SIZE] = 'N'; //default status
         return custID;
+    }
+    
+    // ================= FIND EXISTING CUSTOMER =================
+    public static Customer findCustomer(String name, String phone)
+    {
+        for (int i = 0; i < SIZE; i++)
+        {
+            if (allCustomers[i] != null &&
+                allCustomers[i].getName().equalsIgnoreCase(name) &&
+                allCustomers[i].getPhoneNumber().equals(phone))
+            {
+                return allCustomers[i];
+            }
+        }
+        return null; // not found
     }
     
     // ================= READ MEMBER FILE =================
@@ -72,7 +98,7 @@ public class Customer extends User
             br.close();
         }
         catch(Exception e){
-            System.out.println(e.getMessage());
+            System.err.println("Error occurred.");
         }
     }
     
@@ -93,15 +119,14 @@ public class Customer extends User
             {
                 if(memName[x].equalsIgnoreCase(name) && memPhone[x].equals(phone)) //loop only in available index array
                 {
-                    membership[SIZE] = 'Y';
-                    saveCustDetails();
+                    membership[index] = 'Y';
                     return true;
                 }
             }
 
             return false;
         }
-        catch(Exception e){e.getMessage(); return false;}
+        catch(Exception e){System.err.println("Error occurred."); return false;}
     }
     
     // ================= REGISTER MEMBERSHIP =================
@@ -118,25 +143,28 @@ public class Customer extends User
             System.out.println("=====================================");
         
             Random random = new Random();
-            int randNum = random.nextInt(100,1000);
-            String memID = "MEM-"+randNum;
-        
-            boolean duplicate = false;
-            for(int y=0; y<SIZE; y++)
-            {
-                if(custCodes[y] != null && custCodes[y].equals(memID))
-                {
-                    duplicate = true;
-                    break;
-                }
-            }
+            String memID;
+            boolean duplicate;
             
-            custCodes[SIZE] = memID;
-            membership[SIZE] = 'Y'; //overwrites customer CUS- ID with MEM-ID
+            do{
+                int randNum = random.nextInt(100,1000);
+                memID = "MEM-"+randNum;
+                duplicate = false;
+                for(int y=0; y<SIZE; y++)
+                {
+                    if(custCodes[y] != null && custCodes[y].equals(memID))
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+            }while(duplicate);
+            
+            custCodes[index] = memID;
+            membership[index] = 'Y'; //overwrites customer CUS- ID with MEM-ID
             addMember();
-            saveCustDetails();
         }
-        catch(Exception e){e.getMessage();}
+        catch(Exception e){System.err.println("Error occurred.");}
     }
     
     // ================= ADD MEMBER TO FILE ================= 
@@ -145,11 +173,10 @@ public class Customer extends User
         try{
             PrintWriter pw = new PrintWriter(new FileWriter("memberDetails.txt", true));
 
-            pw.print(getName()+";");
-            pw.print(getPhoneNumber()+";");
+            pw.println(getName()+";"+getPhoneNumber());
             pw.close();
         }
-        catch(Exception e){System.err.println(e.getMessage());}
+        catch(Exception e){System.err.println("Error occurred.");}
     }
 
     // ================= UPDATE MEMBER FILE =================  
@@ -160,13 +187,15 @@ public class Customer extends User
             readFile();
             registerMembership();
         }
-        catch(Exception e){e.getMessage();}
+        catch(Exception e){System.err.println("Error occurred.");}
     }
     
     public void saveCustDetails()//Saves the current customer's details
     {
-        custName[SIZE] = getName();
-        custPhone[SIZE] = getPhoneNumber();
+        index = SIZE;
+        custName[index] = getName();
+        custPhone[index] = getPhoneNumber();
+        allCustomers[index] = this;
         SIZE++;
     }
     

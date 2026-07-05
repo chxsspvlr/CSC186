@@ -6,11 +6,8 @@ public class Payment
     private double fineAmount;
 
     // Constructor
-    public Payment(double amountPaid, double balance,int lateDays, double fineAmount){
+    public Payment(double amountPaid){
         this.amountPaid = amountPaid;
-        this.balance = balance;
-        this.lateDays = lateDays;
-        this.fineAmount = fineAmount;
     }
 
     // Mutator
@@ -26,50 +23,39 @@ public class Payment
     public double getFineAmount(){return fineAmount;}
 
     // Processor
-    public void processPayment(){
-    calculateFine();
-    calculateBalance();
-    updateStatus();
-    }
-    
-    public double calculateBalance(){
-        return  this.amountPaid - this.fineAmount ;
-    }
-    
-    public void updateStatus(){
-    System.out.println("\n=====================================");
-        System.out.println("         PAYMENT RECEIPT");
-        System.out.println("=====================================");
-        System.out.println("Late Days      : " + this.lateDays);
-        System.out.print("Fine Amount    : RM" +this.fineAmount);
-        System.out.print("Amount Paid    : RM" +this.amountPaid);
-
-        if(balance >= 0)
+    public double processPayment(){
+        if(lateDays <= 7)
         {
-            System.out.printf("Balance        : RM", this.balance);
-            System.out.println("Payment Status : SUCCESS");
+            this.fineAmount = 0.0;
         }
         else
         {
-            System.out.println("Amount Owing   : RM" +calculateBalance());
-            System.out.println("Payment Status : INSUFFICIENT PAYMENT");
+            this.fineAmount = 2.0 + ((lateDays - 8) * 0.80);
         }
-
+        return  this.balance= (this.amountPaid - this.fineAmount);
+    }
+    
+    public void paymentDisplay(){
+        System.out.println("Late Days      : " + this.lateDays);
+        System.out.printf("Fine Amount    : RM%.2f%n", this.fineAmount);
+        System.out.printf("Amount Paid    : RM%.2f%n", this.amountPaid);
+        System.out.printf("Balance        : RM%.2f%n", this.balance);
+        System.out.println("Payment Status : SUCCESS");
         System.out.println("=====================================");
     }
     
-    public double calculateFine(){
-      if(lateDays <= 7)
-        this.fineAmount = 0.0;
-      else
-        this.fineAmount = 2.0 + ((lateDays - 8) * 0.80);
-      return this.fineAmount;
-    }
-
-
-    // Printer
-    public void displayFineAmount()
+    public boolean paymentStatus()
     {
-        System.out.println("Fine Amount: RM" + this.fineAmount);
+        if(balance >= 0)
+        {
+            return true;
+        }
+        else
+        {
+            System.out.println("Amount Owing   : RM" +Math.abs(this.balance)); //flips negative sign to positive
+            System.out.println("Payment Status : INSUFFICIENT PAYMENT");
+            System.out.println("=====================================");
+            return false;
+        }  
     }
 }
